@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: openapi-bundle-and-lint
+        name: OpenAPI Bundle and Lint
+        entry: sh -c 'openapi bundle ./aws/api/v1/api-spec/main.yaml -o ./aws/api/v1/api-spec/bundled.yaml && openapi lint ./aws/api/v1/api-spec/bundled.yaml'
+        language: system
+        pass_filenames: false
+        always_run: true

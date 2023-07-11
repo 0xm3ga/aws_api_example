@@ -8,4 +8,136 @@ info:
     url: https://opensource.org/licenses/MIT
 servers:
   - url: https://<domain_name>/v1
-components: {}
+paths:
+  /hello:
+    get:
+      tags:
+        - Greeting
+      summary: Fetches a hello message
+      description: Returns a simple hello message
+      operationId: getHello
+      responses:
+        '200':
+          description: Code context retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/helloResponse'
+        '400':
+          description: Bad Request, usually due to invalid event data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '503':
+          description: External service unavailable or request rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '504':
+          description: Request to external service timed out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloLambda.Arn}/invocations
+  /goodbye:
+    get:
+      tags:
+        - Greeting
+      summary: Fetches a hello message
+      description: Returns a simple hello message
+      operationId: getGoodbye
+      responses:
+        '200':
+          description: Code context retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/goodbyeResponse'
+        '400':
+          description: Bad Request, usually due to invalid event data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '503':
+          description: External service unavailable or request rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '504':
+          description: Request to external service timed out.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GoodbyeLambda.Arn}/invocations
+components:
+  schemas:
+    helloResponse:
+      title: Hello Response
+      type: object
+      description: An object that contains message with hello.
+      properties:
+        message:
+          type: string
+          description: Short hello string
+          example: Hello world!
+      required:
+        - message
+    error:
+      title: Error
+      type: object
+      description: Object representing an error.
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: A human-readable message providing more details about the error.
+        code:
+          type: integer
+          description: A numerical identifier unique to this particular error type.
+          example: 503
+        detail:
+          type: string
+          description: A more detailed explanation of the error, if available.
+        path:
+          type: string
+          description: The path of the HTTP request during which the error occurred.
+    goodbyeResponse:
+      title: Goodbye Response
+      type: object
+      description: An object that contains message with goodbye.
+      properties:
+        message:
+          type: string
+          description: Short goodbye string
+          example: Hello world!
+      required:
+        - message

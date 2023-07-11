@@ -3,7 +3,7 @@ get:
     - Greeting
   summary: Fetches a hello message
   description: Returns a simple hello message
-  operationId: getCodeContext
+  operationId: getHello
   responses:
     "200":
       description: Code context retrieved successfully.
