@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Specification template describing infra for APIs and their documentation (using S3-hosted Swagger UI).
+
+Parameters:
+  ApiDomainName:
+    Type: String
+    Description: Domain name to be used for the API.
+    Default: api.<my.domain.com>
+  DocsDomainName:
+    Type: String
+    Description: Domain name to be used for the docs.
+    Default: docs.<my.domain.com>
+  DocsBucketName:
+    Type: String
+    Description: Bucket name to be used for hosting API docs.
+    Default: <my_project_name>-docs
+
+Resources:
+  # API stacks
+  ApiV1Stack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./api/v1/template.yaml
+      Parameters:
+        ApiDomainName: !Ref ApiDomainName
+        DocsDomainName: !Ref DocsDomainName
+
+  # Docs stacks
+  DocsStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ./docs/template.yaml
+      Parameters:
+        DocsBucketName: !Ref DocsBucketName
+        DocsDomainName: !Ref DocsDomainName
+
+Outputs:
+  DocsCloudFrontDistributionOutput:
+    Description: CloudFront endpoint to add in DNS CNAME record (CNAME  docs  <cloud_front_id>  default)
+    Value: !GetAtt DocsStack.Outputs.DocsCloudFrontDistributionOutput
+  DocsCloudFrontDistributionIdOutput:
+    Description: Docs CloudFront Distribution ID
+    Value: !GetAtt DocsStack.Outputs.DocsCloudFrontDistributionIdOutput
+  DocsBucketNameOutput:
+    Description: API Docs S3 bucket
+    Value: !Ref DocsStack.Outputs.DocsBucketNameOutput

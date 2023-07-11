@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info:
+  title: Codextranauts API
+  description: Main API for the project
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://<domain_name>/v1
+paths:
+  /hello:
+    $ref: "paths/hello.yaml"
+  /goodbye:
+    $ref: "paths/goodbye.yaml"
