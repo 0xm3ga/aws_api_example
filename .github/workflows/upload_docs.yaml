@@ -1,0 +1,95 @@
+name: Upload new API docs into S3
+
+on: push
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: "us-east-1"
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  extract_aws_stack_variables:
+    name: Extract AWS stack outputs
+    runs-on: ubuntu-latest
+    outputs:
+      bucket_name: ${{ steps.extract.outputs.bucket_name }}
+      distribution_id: ${{ steps.extract.outputs.distribution_id }}
+      swagger_exists: ${{ steps.check_swagger.outputs.swagger_exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Extract stack outputs
+        id: extract
+        run: |
+          pip install toml
+          echo "::set-output name=bucket_name::$(python ./utils/ci/extract_stack_output.py DOC_BUCKET_NAME)"
+          echo "::set-output name=distribution_id::$(python ./utils/ci/extract_stack_output.py DOCS_CLOUDFRONT_DISTRIBUTION_ID)"
+        env:
+          CONFIG_FILE_PATH: "./aws/samconfig.toml"
+
+      - name: Check if Swagger UI already exists
+        id: check_swagger
+        run: |
+          exists=$(aws s3 ls s3://${{ steps.extract.outputs.bucket_name }}/swagger-ui/dist/ || echo "")
+          if [ -n "$exists" ]; then
+            echo "::set-output name=swagger_exists::true"
+          else
+            echo "::set-output name=swagger_exists::false"
+          fi
+
+  upload_swagger_ui:
+    name: Upload Swagger UI to S3
+    if: ${{ needs.extract_aws_stack_variables.outputs.swagger_exists == 'false' }}
+    needs: extract_aws_stack_variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Swagger UI
+        uses: actions/checkout@v2
+        with:
+          repository: swagger-api/swagger-ui
+          path: swagger-ui
+
+      - name: Modify swagger-initializer.js
+        run: |
+          sed -i 's|https://petstore.swagger.io/v2/swagger.json|bundled.yaml|g' swagger-ui/dist/swagger-initializer.js
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3
+
+      - name: Upload Swagger UI to S3
+        run: |
+          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ needs.extract_aws_stack_variables.outputs.bucket_name }}
+
+  upload_new_bundled_spec:
+    name: Upload new bundled API spec to S3
+    needs: extract_aws_stack_variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload new bundled API spec file to S3
+        run: |
+          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ needs.extract_aws_stack_variables.outputs.bucket_name }}/ --content-type application/x-yaml
+
+  invalidate_cloudfront_cache:
+    name: Invalidate CloudFront cache
+    if: >
+      always() &&
+      (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'success') ||
+      (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'skipped')
+    needs: [upload_swagger_ui, upload_new_bundled_spec]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invalidate CloudFront distribution
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ needs.extract_aws_stack_variables.outputs.distribution_id }} --paths "/*"
