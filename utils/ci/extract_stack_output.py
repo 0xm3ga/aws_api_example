@@ -11,6 +11,14 @@ class Configuration:
     """Handle configuration related operations."""
 
     def __init__(self, config_file_path: str):
+        if not os.path.isfile(config_file_path):
+            raise FileNotFoundError(
+                f"The configuration file does not exist: {config_file_path}"
+            )
+        if not os.access(config_file_path, os.R_OK):
+            raise PermissionError(
+                f"The configuration file is not readable: {config_file_path}"
+            )
         self.config_file_path = config_file_path
         self.data = self.load()
 
@@ -99,7 +107,7 @@ def main():
     args = parse_arguments()
 
     try:
-        config = Configuration(os.getenv("CONFIG_FILE_PATH", "./aws/samconfig.toml"))
+        config = Configuration(os.getenv("CONFIG_FILE_PATH"))
         stack = AWSStack(config.stack_name)
         output_value = stack.find_output_value(args.output_key)
 
