@@ -1,8 +1,10 @@
-import boto3
-import os
 import argparse
-import mimetypes
 import logging
+import mimetypes
+import os
+import sys
+
+import boto3
 
 
 def configure_logging():
