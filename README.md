@@ -53,3 +53,13 @@ pre-commit install
 ```
 
 Now, when new changes are committed, the pre-commit hooks will automatically format the code and check for issues.
+
+## Testing
+
+Make sure to run this command to add project root into PYTHONPATH to simplify module import.
+
+```bash
+export PYTHONPATH="$PYTHONPATH:$(pwd)"
+```
+
+When writing tests I focus on normal cases, error cases, and edge cases to create a well-rounded set of tests for the lambda functions.
