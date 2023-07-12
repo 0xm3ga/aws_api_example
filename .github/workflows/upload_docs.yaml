@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   check_secrets:
+    name: Check secrets
     runs-on: ubuntu-latest
     steps:
       - name: Check secrets
