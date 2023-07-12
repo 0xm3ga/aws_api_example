@@ -19,3 +19,37 @@ Welcome to my `aws_api_example` repository! This is where I showcase my approach
 Before diving in, you might want to familiarize yourself with the general structure of the project. I've arranged the repository for easy navigation, whether you're looking to explore the code, consult the documentation, or run tests.
 
 I welcome any feedback or contributions you might have. If you spot something that could be improved or have any questions, feel free to submit an issue or a pull request. I'm always looking to improve and learn. Enjoy exploring my code!
+
+## Code Quality
+
+### Setting Up Pre-commit Hooks
+
+To ensure code quality, run tests, and check for issues before each commit, I use pre-commit to manage pre-commit hooks.
+
+Here's how to install and set up the pre-commit hooks:
+
+### Install pre-commit
+
+You can install pre-commit with pip:
+
+```bash
+pip install pre-commit
+```
+
+Pre-commit hooks are configured in the `.pre-commit-config.yaml` file in the root of the repository. The following hooks are included:
+
+1. Black: A code formatter for Python.
+2. Flake8: A Python tool that glues together pep8, PyFlakes, and Ned Batchelder’s McCabe script.
+3. isort: A Python utility to sort imports.
+4. mypy: An optional static type checker for Python.
+5. Pytest: Runs tests using pytest.
+
+### Install the git hook scripts
+
+Run this command to install the git hook scripts:
+
+```bash
+pre-commit install
+```
+
+Now, when new changes are committed, the pre-commit hooks will automatically format the code and check for issues.
