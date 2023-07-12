@@ -45,16 +45,15 @@ jobs:
       - name: Extract stack outputs
         id: extract
         run: |
-          pip install toml
-          echo "::set-output name=bucket_name::$(python ./utils/ci/extract_stack_output.py DOC_BUCKET_NAME)"
-          echo "::set-output name=distribution_id::$(python ./utils/ci/extract_stack_output.py DOCS_CLOUDFRONT_DISTRIBUTION_ID)"
+          python ./utils/ci/extract_stack_output.py DOC_BUCKET_NAME
+          python ./utils/ci/extract_stack_output.py DOCS_CLOUDFRONT_DISTRIBUTION_ID
         env:
           CONFIG_FILE_PATH: "./aws/samconfig.toml"
 
       - name: Check if Swagger UI already exists
         id: check_swagger
         run: |
-          exists=$(aws s3 ls s3://${{ steps.extract.outputs.bucket_name }}/swagger-ui/dist/ || echo "")
+          exists=$(aws s3 ls s3://${{ env.DOC_BUCKET_NAME }}/swagger-ui/dist/ || echo "")
           if [ -n "$exists" ]; then
             echo "::set-output name=swagger_exists::true"
           else
@@ -99,7 +98,7 @@ jobs:
 
       - name: Upload Swagger UI to S3
         run: |
-          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ needs.extract_aws_stack_variables.outputs.bucket_name }}
+          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ env.DOC_BUCKET_NAME }}
 
   upload_new_bundled_spec:
     name: Upload new bundled API spec to S3
@@ -108,7 +107,7 @@ jobs:
     steps:
       - name: Upload new bundled API spec file to S3
         run: |
-          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ needs.extract_aws_stack_variables.outputs.bucket_name }}/ --content-type application/x-yaml
+          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ env.DOC_BUCKET_NAME }}/ --content-type application/x-yaml
 
   invalidate_cloudfront_cache:
     name: Invalidate CloudFront cache
@@ -121,4 +120,4 @@ jobs:
     steps:
       - name: Invalidate CloudFront distribution
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ needs.extract_aws_stack_variables.outputs.distribution_id }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

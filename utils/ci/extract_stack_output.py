@@ -100,7 +100,6 @@ def parse_arguments():
 
 
 def main():
-    """The main function to run the script."""
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -116,7 +115,8 @@ def main():
                 f"Output key '{args.output_key}' not found in the stack outputs."
             )
         else:
-            print(output_value)
+            with open(os.getenv("GITHUB_ENV"), "a") as file:
+                file.write(f"{args.output_key}={output_value}\n")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         exit(1)
