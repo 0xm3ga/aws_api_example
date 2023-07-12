@@ -15,12 +15,12 @@ repos:
         pass_filenames: false
         args: ["-m", "unit"]
 
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v0.910
-  #   hooks:
-  #     - id: mypy
-  #       language_version: python3
-  #       additional_dependencies: [types-toml]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.910
+    hooks:
+      - id: mypy
+        language_version: python3
+        additional_dependencies: [types-toml]
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
