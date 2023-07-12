@@ -1,10 +1,11 @@
-import toml
-import subprocess
+import argparse
 import json
 import logging
 import os
-import argparse
+import subprocess
 from typing import Optional
+
+import toml
 
 
 class Configuration:
@@ -27,7 +28,9 @@ class Configuration:
         try:
             return toml.load(self.config_file_path)
         except Exception as e:
-            logging.error(f"Failed to load configuration file: {self.config_file_path}")
+            logging.error(
+                f"Failed to load configuration file: {self.config_file_path}"
+            )
             raise RuntimeError("Could not load the configuration file.") from e
 
     @property
@@ -78,7 +81,11 @@ class AWSStack:
         """Find the value of the given output key in the stack output."""
         output = self.fetch_output()
         return next(
-            (item["OutputValue"] for item in output if item["OutputKey"] == output_key),
+            (
+                item["OutputValue"]
+                for item in output
+                if item["OutputKey"] == output_key
+            ),
             None,
         )
 
@@ -89,12 +96,15 @@ def parse_arguments():
         description="Extract a specific variable from AWS Stack Information."
     )
     parser.add_argument(
-        "output_key", help="The output key to extract from the stack information."
+        "output_key",
+        help="The output key to extract from the stack information.",
     )
     args = parser.parse_args()
 
     if not args.output_key or not isinstance(args.output_key, str):
-        raise argparse.ArgumentTypeError("Output key is required and must be a string.")
+        raise argparse.ArgumentTypeError(
+            "Output key is required and must be a string."
+        )
 
     return args
 
@@ -112,7 +122,8 @@ def main():
 
         if output_value is None:
             logging.warning(
-                f"Output key '{args.output_key}' not found in the stack outputs."
+                f"Output key '{args.output_key}' not found in the stack "
+                "outputs."
             )
         else:
             with open(os.getenv("GITHUB_ENV"), "a") as file:

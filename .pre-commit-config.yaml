@@ -18,6 +18,8 @@ repos:
     rev: v0.910
     hooks:
       - id: mypy
+        language_version: python3
+        additional_dependencies: [types-toml]
 
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
@@ -28,8 +30,10 @@ repos:
     rev: 23.7.0
     hooks:
       - id: black
+        language_version: python3.9
 
   # - repo: https://gitlab.com/pycqa/flake8
-  #   rev: 5.0.4
+  #   rev: 3.9.2
   #   hooks:
   #     - id: flake8
+  #       verbose: true

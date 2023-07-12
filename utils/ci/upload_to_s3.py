@@ -22,7 +22,8 @@ def upload_to_s3(directory_path, bucket_name):
     """
     s3 = boto3.client("s3")
     logging.info(
-        f"Started uploading files from '{directory_path}' to S3 bucket '{bucket_name}'"
+        f"Started uploading files from '{directory_path}' to S3 "
+        "bucket '{bucket_name}'"
     )
 
     for root, _, files in os.walk(directory_path):
@@ -42,7 +43,8 @@ def upload_to_s3(directory_path, bucket_name):
                         ContentType=content_type,
                     )
                 logging.info(
-                    f"Uploaded file '{file_path}' to S3 bucket '{bucket_name}' with key '{s3_key}'"
+                    f"Uploaded file '{file_path}' to S3 bucket "
+                    "'{bucket_name}' with key '{s3_key}'"
                 )
             except Exception as e:
                 logging.error(f"Error while uploading file '{file_path}': {e}")
@@ -52,8 +54,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Upload files from a local directory to an S3 bucket."
     )
-    parser.add_argument("directory_path", type=str, help="The local directory path")
-    parser.add_argument("bucket_name", type=str, help="The name of the S3 bucket")
+    parser.add_argument(
+        "directory_path", type=str, help="The local directory path"
+    )
+    parser.add_argument(
+        "bucket_name", type=str, help="The name of the S3 bucket"
+    )
 
     args = parser.parse_args()
 
