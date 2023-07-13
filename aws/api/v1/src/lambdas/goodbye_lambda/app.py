@@ -5,15 +5,15 @@ import os
 import traceback
 from typing import Dict
 
+from errors import (
+    CustomError,
+    InvalidQueryStringParameterError,
+    MissingRequiredQueryStringParameterError,
+)
+
 # Set up specific logger for this module
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-class InvalidNameError(Exception):
-    """Custom error for invalid name input."""
-
-    pass
 
 
 def validate_input(event: Dict) -> str:
@@ -22,14 +22,16 @@ def validate_input(event: Dict) -> str:
     :param event: Lambda event data
     :return: Validated name string
     """
-    try:
-        name = event.get("queryStringParameters", {}).get("name")
-        if not name:
-            raise InvalidNameError("Invalid name provided")
-        return name
-    except InvalidNameError as e:
-        logger.error(f"Invalid input: {e}")
-        raise
+    query_parameters = event.get("queryStringParameters", {})
+
+    if "name" not in query_parameters:
+        raise MissingRequiredQueryStringParameterError("'name' query string parameter is required")
+
+    name = query_parameters.get("name")
+    if not name or name.strip() == "":
+        raise InvalidQueryStringParameterError("Invalid name provided")
+
+    return name
 
 
 def greet_user(name: str) -> Dict:
@@ -41,9 +43,7 @@ def greet_user(name: str) -> Dict:
     return {"message": f"Goodbye, {name}!"}
 
 
-def generate_response(
-    body: Dict, status_code: int = http.HTTPStatus.OK
-) -> Dict:
+def generate_response(body: Dict, status_code: int = http.HTTPStatus.OK) -> Dict:
     """
     Generate an HTTP response.
     :param body: Response body content
@@ -51,6 +51,16 @@ def generate_response(
     :return: HTTP response dictionary
     """
     DOCS_DOMAIN_NAME = os.getenv("DOCS_DOMAIN_NAME")
+
+    try:
+        body_json = json.dumps(body)
+    except TypeError as e:
+        logger.error(f"Error serializing response body to JSON: {e}")
+        body_json = json.dumps(
+            {"error": "An unexpected error occurred while processing the response."}
+        )
+        status_code = http.HTTPStatus.INTERNAL_SERVER_ERROR
+
     return {
         "statusCode": status_code,
         "headers": {
@@ -59,7 +69,7 @@ def generate_response(
             "Access-Control-Allow-Origin": f"https://{DOCS_DOMAIN_NAME}",
             "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
         },
-        "body": json.dumps(body),
+        "body": body_json,
     }
 
 
@@ -74,13 +84,14 @@ def handle_exception(
         (default: generic server error message)
     :return: HTTP response dictionary
     """
-    logger.error({"message": str(e), "trace": traceback.format_exc()})
-    error_message = (
-        str(e) if isinstance(e, InvalidNameError) else default_message
+    logger.error({"error": str(e), "trace": traceback.format_exc()})
+
+    status_code = (
+        e.status_code if isinstance(e, CustomError) else http.HTTPStatus.INTERNAL_SERVER_ERROR
     )
-    return generate_response(
-        {"message": error_message}, http.HTTPStatus.INTERNAL_SERVER_ERROR
-    )
+    error_message = str(e) if isinstance(e, CustomError) else default_message
+
+    return generate_response({"error": error_message}, status_code)
 
 
 def lambda_handler(event, context) -> Dict:

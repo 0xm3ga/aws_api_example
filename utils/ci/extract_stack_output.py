@@ -13,13 +13,9 @@ class Configuration:
 
     def __init__(self, config_file_path: str):
         if not os.path.isfile(config_file_path):
-            raise FileNotFoundError(
-                f"The configuration file does not exist: {config_file_path}"
-            )
+            raise FileNotFoundError(f"The configuration file does not exist: {config_file_path}")
         if not os.access(config_file_path, os.R_OK):
-            raise PermissionError(
-                f"The configuration file is not readable: {config_file_path}"
-            )
+            raise PermissionError(f"The configuration file is not readable: {config_file_path}")
         self.config_file_path = config_file_path
         self.data = self.load()
 
@@ -28,19 +24,14 @@ class Configuration:
         try:
             return toml.load(self.config_file_path)
         except Exception as e:
-            logging.error(
-                f"Failed to load configuration file: {self.config_file_path}"
-            )
+            logging.error(f"Failed to load configuration file: {self.config_file_path}")
             raise RuntimeError("Could not load the configuration file.") from e
 
     @property
     def stack_name(self) -> Optional[str]:
         """Retrieve stack name from the configuration."""
         stack_name = (
-            self.data.get("default", {})
-            .get("deploy", {})
-            .get("parameters", {})
-            .get("stack_name")
+            self.data.get("default", {}).get("deploy", {}).get("parameters", {}).get("stack_name")
         )
         if not stack_name:
             raise ValueError("Stack name not found in the configuration.")
@@ -81,11 +72,7 @@ class AWSStack:
         """Find the value of the given output key in the stack output."""
         output = self.fetch_output()
         return next(
-            (
-                item["OutputValue"]
-                for item in output
-                if item["OutputKey"] == output_key
-            ),
+            (item["OutputValue"] for item in output if item["OutputKey"] == output_key),
             None,
         )
 
@@ -102,17 +89,13 @@ def parse_arguments():
     args = parser.parse_args()
 
     if not args.output_key or not isinstance(args.output_key, str):
-        raise argparse.ArgumentTypeError(
-            "Output key is required and must be a string."
-        )
+        raise argparse.ArgumentTypeError("Output key is required and must be a string.")
 
     return args
 
 
 def main():
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     args = parse_arguments()
 
     try:
@@ -121,10 +104,7 @@ def main():
         output_value = stack.find_output_value(args.output_key)
 
         if output_value is None:
-            logging.warning(
-                f"Output key '{args.output_key}' not found in the stack "
-                "outputs."
-            )
+            logging.warning(f"Output key '{args.output_key}' not found in the stack " "outputs.")
         else:
             with open(os.getenv("GITHUB_ENV"), "a") as file:
                 file.write(f"{args.output_key}={output_value}\n")
