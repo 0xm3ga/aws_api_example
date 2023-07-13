@@ -70,7 +70,7 @@ Resources:
     Properties:
       LayerName: utils-layer
       Description: My utils tools
-      ContentUri: ../../../utils
+      ContentUri: src/layers/utils_layer
       CompatibleRuntimes:
         - python3.9
       LicenseInfo: "MIT"
