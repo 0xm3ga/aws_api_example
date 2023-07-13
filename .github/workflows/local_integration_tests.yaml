@@ -29,7 +29,7 @@ jobs:
           sam build
 
       - name: Run local API
-        working-directory: .aws-sam/build/ApiV1Stack
+        working-directory: ./aws/.aws-sam/build/ApiV1Stack
         run: |
           sam local start-api &
           sleep 10
