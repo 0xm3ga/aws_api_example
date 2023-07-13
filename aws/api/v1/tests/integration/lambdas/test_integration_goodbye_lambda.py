@@ -18,10 +18,10 @@ def make_request(endpoint, params=None):
 
 @pytest.mark.integration
 def test_hello_lambda():
-    response = make_request("hello", params={"name": "John"})
+    response = make_request("goodbye", params={"name": "John"})
     assert response.status_code == http.HTTPStatus.OK
     data = response.json()
-    assert data["message"] == "Hello, John!"
+    assert data["message"] == "Goodbye, John!"
 
 
 @pytest.mark.integration
@@ -35,7 +35,7 @@ def test_hello_lambda():
     ],
 )
 def test_hello_lambda_errors(params, expected_status_code, expected_error_message):
-    response = make_request("hello", params=params)
+    response = make_request("goodbye", params=params)
     assert response.status_code == expected_status_code
     data = response.json()
     assert data["error"] == expected_error_message

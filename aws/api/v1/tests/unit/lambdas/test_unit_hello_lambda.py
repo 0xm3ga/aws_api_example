@@ -13,7 +13,7 @@ from aws.api.v1.src.lambdas.hello_lambda.app import (
     logger,
     validate_input,
 )
-from errors import InvalidQueryStringParameterError, MissingRequiredQueryStringParameterError
+from utils.errors import InvalidQueryStringParameterError, MissingRequiredQueryStringParameterError
 
 app_module = "aws.api.v1.src.lambdas.hello_lambda.app"
 

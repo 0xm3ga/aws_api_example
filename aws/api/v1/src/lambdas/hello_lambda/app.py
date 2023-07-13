@@ -5,11 +5,17 @@ import os
 import traceback
 from typing import Dict
 
-from errors import (
+from utils.errors import (
+    DEFAULT_HTTP_ERROR,
+    INVALID_NAME_ERROR,
+    JSON_SERIALIZING_ERROR,
+    REQUIRED_NAME_ERROR,
+    UNEXPECTED_HTTP_ERROR,
     CustomError,
     InvalidQueryStringParameterError,
     MissingRequiredQueryStringParameterError,
 )
+from utils.logging import ENDED_PROCESSING_LOG, STARTED_PROCESSING_LOG
 
 # Set up specific logger for this module
 logger = logging.getLogger(__name__)
@@ -24,12 +30,15 @@ def validate_input(event: Dict) -> str:
     """
     query_parameters = event.get("queryStringParameters", {})
 
+    if not query_parameters:
+        raise MissingRequiredQueryStringParameterError(REQUIRED_NAME_ERROR)
+
     if "name" not in query_parameters:
-        raise MissingRequiredQueryStringParameterError("'name' query string parameter is required")
+        raise MissingRequiredQueryStringParameterError(REQUIRED_NAME_ERROR)
 
     name = query_parameters.get("name")
     if not name or name.strip() == "":
-        raise InvalidQueryStringParameterError("Invalid name provided")
+        raise InvalidQueryStringParameterError(INVALID_NAME_ERROR)
 
     return name
 
@@ -55,10 +64,8 @@ def generate_response(body: Dict, status_code: int = http.HTTPStatus.OK) -> Dict
     try:
         body_json = json.dumps(body)
     except TypeError as e:
-        logger.error(f"Error serializing response body to JSON: {e}")
-        body_json = json.dumps(
-            {"error": "An unexpected error occurred while processing the response."}
-        )
+        logger.error(JSON_SERIALIZING_ERROR.format(e))
+        body_json = json.dumps({"error": UNEXPECTED_HTTP_ERROR})
         status_code = http.HTTPStatus.INTERNAL_SERVER_ERROR
 
     return {
@@ -75,7 +82,7 @@ def generate_response(body: Dict, status_code: int = http.HTTPStatus.OK) -> Dict
 
 def handle_exception(
     e: Exception,
-    default_message: str = "An error occurred processing your request.",
+    default_message: str = DEFAULT_HTTP_ERROR,
 ) -> Dict:
     """
     Handle exceptions in a uniform way.
@@ -101,9 +108,10 @@ def lambda_handler(event, context) -> Dict:
     :param context: Lambda context data
     :return: Response dictionary
     """
+    print(event)
     try:
         # Log start of function execution and event data
-        logger.info(f"Start processing lambda with event: {event}")
+        logger.info(STARTED_PROCESSING_LOG.format(event))
 
         # Process request
         name = validate_input(event)
@@ -111,7 +119,7 @@ def lambda_handler(event, context) -> Dict:
         response = generate_response(response_body)
 
         # Log end of function execution
-        logger.info(f"End processing lambda with event: {event}")
+        logger.info(ENDED_PROCESSING_LOG.format(event))
     except Exception as e:
         response = handle_exception(e)
     return response

@@ -1,5 +1,11 @@
 import http
 
+REQUIRED_NAME_ERROR = "'name' query string parameter is required"
+INVALID_NAME_ERROR = "Invalid name provided"
+DEFAULT_HTTP_ERROR = "An error occurred processing your request."
+UNEXPECTED_HTTP_ERROR = "An unexpected error occurred while processing the response."
+JSON_SERIALIZING_ERROR = "Error serializing response body to JSON: {}"
+
 
 class CustomError(Exception):
     """Base class for other custom exceptions."""
