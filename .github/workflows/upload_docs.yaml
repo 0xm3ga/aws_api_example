@@ -63,8 +63,8 @@ jobs:
       - name: Extract stack outputs
         id: extract
         run: |
-          python ./utils/ci/extract_stack_output.py DOC_BUCKET_NAME
-          python ./utils/ci/extract_stack_output.py DOCS_CLOUDFRONT_DISTRIBUTION_ID
+          python ./utils/ci/extract_stack_output.py DocsBucketNameOutput DOC_BUCKET_NAME
+          python ./utils/ci/extract_stack_output.py DocsCloudFrontDistributionIdOutput DOCS_CLOUDFRONT_DISTRIBUTION_ID
         env:
           CONFIG_FILE_PATH: "./aws/samconfig.toml"
 

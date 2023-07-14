@@ -86,10 +86,16 @@ def parse_arguments():
         "output_key",
         help="The output key to extract from the stack information.",
     )
+    parser.add_argument(
+        "var_name",
+        help="The variable name to be saved in GitHub",
+    )
     args = parser.parse_args()
 
     if not args.output_key or not isinstance(args.output_key, str):
         raise argparse.ArgumentTypeError("Output key is required and must be a string.")
+    if not args.var_name or not isinstance(args.var_name, str):
+        raise argparse.ArgumentTypeError("Variable name is required and must be a string.")
 
     return args
 
@@ -107,7 +113,7 @@ def main():
             logging.warning(f"Output key '{args.output_key}' not found in the stack " "outputs.")
         else:
             with open(os.getenv("GITHUB_ENV"), "a") as file:
-                file.write(f"{args.output_key}={output_value}\n")
+                file.write(f"{args.var_name}={output_value}\n")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         exit(1)
