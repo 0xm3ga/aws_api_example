@@ -7,7 +7,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://<domain_name>/v1
+  - url: https://api.bluecollarverse.com/v1
 paths:
   /hello:
     get:
