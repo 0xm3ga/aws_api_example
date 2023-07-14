@@ -112,6 +112,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           pip install -r ./utils/ci/requirements.txt
 
       - name: Upload Swagger UI to S3
