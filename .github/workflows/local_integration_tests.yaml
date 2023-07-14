@@ -16,11 +16,6 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Add PYTHONPATH
-        run: |
-          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-          echo $PYTHONPATH
-
       - name: Cache dependencies
         uses: actions/cache@v2
         id: cache
@@ -52,4 +47,5 @@ jobs:
 
       - name: Run pytest
         run: |
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           pytest -m integration
