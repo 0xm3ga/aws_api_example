@@ -69,6 +69,7 @@ jobs:
       - name: Print bucket name
         run: |
           echo "${{ env.DOC_BUCKET_NAME }}"
+          echo "${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}"
 
       - name: Check if Swagger UI already exists
         id: check_swagger
