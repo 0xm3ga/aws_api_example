@@ -44,4 +44,4 @@ Outputs:
     Value: !GetAtt DocsStack.Outputs.DocsCloudFrontDistributionIdOutput
   DocsBucketNameOutput:
     Description: API Docs S3 bucket
-    Value: !Ref DocsStack.Outputs.DocsBucketNameOutput
+    Value: !GetAtt DocsStack.Outputs.DocsBucketNameOutput

@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Codextranauts API
+  title: Bluecollarverse API
   description: Main API for the project
   version: 1.0.0
   license:
