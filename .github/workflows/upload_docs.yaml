@@ -58,10 +58,19 @@ jobs:
         env:
           CONFIG_FILE_PATH: "./aws/samconfig.toml"
 
+      - name: Set output
+        id: vars
+        run: |
+          echo "::set-output name=DOC_BUCKET_NAME::${DOC_BUCKET_NAME}"
+          echo "::set-output name=DOCS_CLOUDFRONT_DISTRIBUTION_ID::${DOCS_CLOUDFRONT_DISTRIBUTION_ID}"
+
+      - name: Print bucket name
+        run: echo "${{ needs.extract_aws_stack_variables.outputs.DOC_BUCKET_NAME }}"
+
       - name: Check if Swagger UI already exists
         id: check_swagger
         run: |
-          exists=$(aws s3 ls s3://${{ env.DOC_BUCKET_NAME }}/swagger-ui/dist/ || echo "")
+          exists=$(aws s3 ls s3://${{env.DOC_BUCKET_NAME}}/swagger-ui/dist/ || echo "")
           if [ -n "$exists" ]; then
             echo "::set-output name=swagger_exists::true"
           else
@@ -100,11 +109,11 @@ jobs:
 
       - name: Print bucket name
         run: |
-          echo ${{ env.DOC_BUCKET_NAME }}
+          echo ${{ needs.extract.outputs.DOC_BUCKET_NAME }}
 
       - name: Upload Swagger UI to S3
         run: |
-          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ env.DOC_BUCKET_NAME }}
+          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ needs.extract.outputs.DOC_BUCKET_NAME }}
 
   upload_new_bundled_spec:
     name: Upload new bundled API spec to S3
@@ -116,7 +125,7 @@ jobs:
 
       - name: Upload new bundled API spec file to S3
         run: |
-          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ env.DOC_BUCKET_NAME }}/ --content-type application/x-yaml
+          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ needs.extract.outputs.DOC_BUCKET_NAME }}/ --content-type application/x-yaml
 
   invalidate_cloudfront_cache:
     name: Invalidate CloudFront cache
@@ -129,4 +138,4 @@ jobs:
     steps:
       - name: Invalidate CloudFront distribution
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ needs.extract.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
