@@ -137,9 +137,14 @@ jobs:
       always() &&
       (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'success') ||
       (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'skipped')
-    needs: [upload_swagger_ui, upload_new_bundled_spec]
+    needs:
+      [extract_aws_stack_variables, upload_swagger_ui, upload_new_bundled_spec]
     runs-on: ubuntu-latest
     steps:
+      - name: Print CloudFront Distribution Id
+        run: |
+          echo ${{ needs.extract_aws_stack_variables.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}
+
       - name: Invalidate CloudFront distribution
         run: |
           aws cloudfront create-invalidation --distribution-id ${{ needs.extract_aws_stack_variables.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
