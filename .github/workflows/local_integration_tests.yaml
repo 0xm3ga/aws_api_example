@@ -19,9 +19,6 @@ jobs:
       - name: Add PYTHONPATH
         run: |
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-
-      - name: Check PYTHONPATH
-        run: |
           echo $PYTHONPATH
 
       - name: Cache dependencies
