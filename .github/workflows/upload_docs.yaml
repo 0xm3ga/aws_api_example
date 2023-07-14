@@ -84,6 +84,9 @@ jobs:
     needs: extract_aws_stack_variables
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Checkout Swagger UI
         uses: actions/checkout@v2
         with:
@@ -113,11 +116,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-          pip install -r utils/ci/requirements.txt
+          pip install -r ./utils/ci/requirements.txt
 
       - name: Upload Swagger UI to S3
         run: |
-          python utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ env.DOC_BUCKET_NAME }}
+          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ env.DOC_BUCKET_NAME }}
 
   upload_new_bundled_spec:
     name: Upload new bundled API spec to S3
