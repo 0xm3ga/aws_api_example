@@ -46,6 +46,10 @@ jobs:
           sam local start-api &
           sleep 10
 
+      - name: Call endpoint
+        run: |
+          curl "http://127.0.0.1:3000/hello?name=world"
+
       - name: Run pytest
-        working-directory: ./
-        run: pytest -m integration
+        run: |
+          pytest -m integration
