@@ -1,0 +1,9 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "aws-api-example"
+resolve_s3 = true
+s3_prefix = "aws-api-example"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+parameter_overrides = "ApiDomainName=\"api.bluecollarverse.com\" DocsDomainName=\"docs.bluecollarverse.com\" DocsBucketName=\"bluecollarverse-docs\""
+image_repositories = []

@@ -1,0 +1,40 @@
+repos:
+  - repo: local
+    hooks:
+      - id: openapi-bundle-and-lint
+        name: OpenAPI Bundle and Lint
+        entry: sh -c 'set -e; openapi bundle ./aws/api/v1/api-spec/main.yaml -o ./aws/api/v1/api-spec/bundled.yaml && openapi lint ./aws/api/v1/api-spec/bundled.yaml'
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: pytest-unit-test
+        name: Pytest unit tests
+        entry: sh -c 'export PYTHONPATH="${PYTHONPATH}:$(pwd)" && pytest'
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: ["-m", "unit"]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        language_version: python3
+        additional_dependencies: [types-toml, types-requests]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3.9
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        verbose: true

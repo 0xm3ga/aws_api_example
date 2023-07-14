@@ -1,0 +1,43 @@
+get:
+  tags:
+    - Greeting
+  summary: Fetches a hello message
+  description: Returns a simple hello message
+  operationId: getGoodbye
+  responses:
+    "200":
+      description: Code context retrieved successfully.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/goodbyeResponse.yaml"
+    "400":
+      description: Bad Request, usually due to invalid event data.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/error.yaml"
+    "500":
+      description: An unexpected error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/error.yaml"
+    "503":
+      description: External service unavailable or request rejected.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/error.yaml"
+    "504":
+      description: Request to external service timed out.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/error.yaml"
+
+  x-amazon-apigateway-integration:
+    httpMethod: POST
+    type: aws_proxy
+    uri:
+      Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GoodbyeLambda.Arn}/invocations

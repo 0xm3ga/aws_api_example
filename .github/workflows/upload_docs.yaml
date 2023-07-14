@@ -1,0 +1,150 @@
+name: Upload new API docs into S3
+
+on: push
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: "us-east-1"
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  check_secrets:
+    name: Check secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets
+        run: |
+          if [[ -z "${AWS_ACCESS_KEY_ID}" ]]; then
+            echo "AWS_ACCESS_KEY_ID is not set."
+            exit 1
+          fi
+
+          if [[ -z "${AWS_SECRET_ACCESS_KEY}" ]]; then
+            echo "AWS_SECRET_ACCESS_KEY is not set."
+            exit 1
+          fi
+
+  extract_aws_stack_variables:
+    name: Extract AWS stack outputs
+    needs: check_secrets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    outputs:
+      swagger_exists: ${{ steps.check_swagger.outputs.swagger_exists }}
+      DOC_BUCKET_NAME: ${{ steps.vars.outputs.DOC_BUCKET_NAME }}
+      DOCS_CLOUDFRONT_DISTRIBUTION_ID: ${{ steps.vars.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ./utils/ci/requirements.txt
+
+      - name: Extract stack outputs
+        id: extract
+        run: |
+          python ./utils/ci/extract_stack_output.py DocsBucketNameOutput DOC_BUCKET_NAME
+          python ./utils/ci/extract_stack_output.py DocsCloudFrontDistributionIdOutput DOCS_CLOUDFRONT_DISTRIBUTION_ID
+        env:
+          CONFIG_FILE_PATH: "./aws/samconfig.toml"
+
+      - name: Set output
+        id: vars
+        run: |
+          echo "::set-output name=DOC_BUCKET_NAME::${{ env.DOC_BUCKET_NAME }}"
+          echo "::set-output name=DOCS_CLOUDFRONT_DISTRIBUTION_ID::${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}"
+
+      - name: Print bucket name
+        run: |
+          echo "${{ env.DOC_BUCKET_NAME }}"
+          echo "${{ env.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}"
+
+      - name: Check if Swagger UI already exists
+        id: check_swagger
+        run: |
+          exists=$(aws s3 ls s3://${{env.DOC_BUCKET_NAME}}/swagger-ui/dist/ || echo "")
+          if [ -n "$exists" ]; then
+            echo "::set-output name=swagger_exists::true"
+          else
+            echo "::set-output name=swagger_exists::false"
+          fi
+
+  upload_swagger_ui:
+    name: Upload Swagger UI to S3
+    if: ${{ needs.extract_aws_stack_variables.outputs.swagger_exists == 'false' }}
+    needs: extract_aws_stack_variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Checkout Swagger UI
+        uses: actions/checkout@v2
+        with:
+          repository: swagger-api/swagger-ui
+          path: swagger-ui
+
+      - name: Modify swagger-initializer.js
+        run: |
+          sed -i 's|https://petstore.swagger.io/v2/swagger.json|bundled.yaml|g' swagger-ui/dist/swagger-initializer.js
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+          pip install -r ./utils/ci/requirements.txt
+
+      - name: Print bucket name
+        run: |
+          echo ${{ needs.extract_aws_stack_variables.outputs.DOC_BUCKET_NAME }}
+
+      - name: Upload Swagger UI to S3
+        run: |
+          python ./utils/ci/upload_to_s3.py 'swagger-ui/dist' ${{ needs.extract_aws_stack_variables.outputs.DOC_BUCKET_NAME }}
+
+  upload_new_bundled_spec:
+    name: Upload new bundled API spec to S3
+    needs: extract_aws_stack_variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Upload new bundled API spec file to S3
+        run: |
+          aws s3 cp ./aws/api/v1/api-spec/bundled.yaml s3://${{ needs.extract_aws_stack_variables.outputs.DOC_BUCKET_NAME }}/ --content-type application/x-yaml
+
+  invalidate_cloudfront_cache:
+    name: Invalidate CloudFront cache
+    if: >
+      always() &&
+      (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'success') ||
+      (needs.upload_new_bundled_spec.result == 'success' && needs.upload_swagger_ui.result == 'skipped')
+    needs:
+      [extract_aws_stack_variables, upload_swagger_ui, upload_new_bundled_spec]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print CloudFront Distribution Id
+        run: |
+          echo ${{ needs.extract_aws_stack_variables.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }}
+
+      - name: Invalidate CloudFront distribution
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ needs.extract_aws_stack_variables.outputs.DOCS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: An API Gateway with a custom domain.
+
+Parameters:
+  DocsDomainName:
+    Type: String
+    Description: Docs custom domain name
+  ApiDomainName:
+    Type: String
+    Description: API custom domain name
+
+Globals:
+  Function:
+    Timeout: 3
+    Layers:
+      - !Ref UtilsLambdaLayer
+
+Resources:
+  # Certificates
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref ApiDomainName
+      ValidationMethod: DNS
+
+  # Custom domains
+  ApiDomain:
+    Type: AWS::ApiGateway::DomainName
+    DependsOn:
+      - ApiCertificate
+    Properties:
+      DomainName: !Ref ApiDomainName
+      CertificateArn: !Ref ApiCertificate
+
+  # API gateway
+  MainApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./api-spec/bundled.yaml
+
+  MainApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - HelloLambda
+      - GoodbyeLambda
+    Properties:
+      RestApiId: !Ref MainApi
+      Description: Deployment for Main API
+
+  # API mappings
+  MainApiBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+      - MainApiDeployment
+    Properties:
+      BasePath: v1
+      DomainName: !Ref ApiDomain
+      RestApiId: !Ref MainApi
+      Stage: Prod
+
+  # Lambda layers
+  UtilsLambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: utils-layer
+      Description: My utils tools
+      ContentUri: src/layers/utils_layer
+      CompatibleRuntimes:
+        - python3.9
+      LicenseInfo: "MIT"
+    Metadata:
+      BuildMethod: python3.9
+
+  # Lambdas
+  HelloLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/lambdas/hello_lambda/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          DOCS_DOMAIN_NAME: !Ref DocsDomainName # Needed for CORS
+      Events:
+        HelloLambda:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+            RestApiId:
+              Ref: MainApi
+  GoodbyeLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/lambdas/goodbye_lambda/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Environment:
+        Variables:
+          DOCS_DOMAIN_NAME: !Ref DocsDomainName # Needed for CORS
+      Events:
+        GoodbyeLambda:
+          Type: Api
+          Properties:
+            Path: /goodbye
+            Method: get
+            RestApiId:
+              Ref: MainApi
+# Outputs:
+#   MainApiOutput:
+#     Description: "API Gateway endpoint URL for Prod environment"
+#     Value: !Sub "https://${MainApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

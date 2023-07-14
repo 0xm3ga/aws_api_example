@@ -1,0 +1,10 @@
+title: Hello Response
+type: object
+description: An object that contains message with hello.
+properties:
+  message:
+    type: string
+    description: Short hello string
+    example: Hello world!
+required:
+  - message

@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: API Docs infra for S3-hosted Swagger UI
+
+Parameters:
+  DocsDomainName:
+    Type: String
+    Description: Docs custom domain name
+  DocsBucketName:
+    Type: String
+    Description: Docs S3 bucket name
+
+Resources:
+  # Certificates
+  DocsCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DocsDomainName
+      ValidationMethod: DNS
+
+  # S3 buckets
+  DocsBucket: ## TODO: Need to give public access to the bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DocsBucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        # ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+
+  DocsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DeletionPolicy: Retain
+    DependsOn:
+      - DocsBucket
+      - DocsCloudFrontDistributionIdentity
+    Properties:
+      Bucket: !Ref DocsBucket
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${DocsBucket}/*"
+            Principal:
+              CanonicalUser: !GetAtt DocsCloudFrontDistributionIdentity.S3CanonicalUserId
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${DocsBucket}/*"
+            Principal: "*"
+            Sid: PublicReadGetObject
+
+  # Cloud Front
+  DocsCloudFrontDistributionIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Access identity for Docs bucket
+
+  DocsCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - DocsCloudFrontDistributionIdentity
+      - DocsBucket
+      - DocsCertificate
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref DocsDomainName
+        Origins:
+          - DomainName: !GetAtt DocsBucket.DomainName
+            Id: MyS3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${DocsCloudFrontDistributionIdentity}
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: MyS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          AllowedMethods:
+            - HEAD
+            - GET
+        ViewerCertificate:
+          AcmCertificateArn: !Ref DocsCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        HttpVersion: http2
+
+Outputs:
+  DocsCloudFrontDistributionOutput:
+    Description: CloudFront endpoint to add in DNS CNAME record (CNAME  docs  <cloud_front_id>  default)
+    Value: !GetAtt DocsCloudFrontDistribution.DomainName
+  DocsCloudFrontDistributionIdOutput:
+    Description: Docs CloudFront Distribution ID
+    Value: !Ref DocsCloudFrontDistribution
+  DocsBucketNameOutput:
+    Description: API Docs S3 bucket
+    Value: !Ref DocsBucket
