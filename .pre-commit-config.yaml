@@ -9,7 +9,7 @@ repos:
         always_run: true
       - id: pytest-unit-test
         name: Pytest unit tests
-        entry: pytest
+        entry: sh -c 'export PYTHONPATH="${PYTHONPATH}:$(pwd)" && pytest'
         language: system
         types: [python]
         pass_filenames: false
