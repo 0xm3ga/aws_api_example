@@ -9,11 +9,10 @@ repos:
         always_run: true
       - id: pytest-unit-test
         name: Pytest unit tests
-        entry: sh -c 'export PYTHONPATH="${PYTHONPATH}:$(pwd)" && pytest'
+        entry: sh -c 'export PYTHONPATH="${PYTHONPATH}:$(pwd)" && pytest -m unit'
         language: system
         types: [python]
         pass_filenames: false
-        args: ["-m", "unit"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.4.1
