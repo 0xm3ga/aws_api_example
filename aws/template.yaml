@@ -29,6 +29,7 @@ Resources:
       Parameters:
         ApiDomainName: !Ref ApiDomainName
         DocsDomainName: !Ref DocsDomainName
+        RootHostedZone: !Ref RootHostedZone
 
   # Docs stacks
   DocsStack:
