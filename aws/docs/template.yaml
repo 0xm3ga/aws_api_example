@@ -9,6 +9,9 @@ Parameters:
   DocsBucketName:
     Type: String
     Description: Docs S3 bucket name
+  RootHostedZone:
+    Type: String
+    Description: Root Hosted Zone
 
 Resources:
   # Certificates
@@ -52,6 +55,16 @@ Resources:
             Resource: !Sub "arn:aws:s3:::${DocsBucket}/*"
             Principal: "*"
             Sid: PublicReadGetObject
+
+  DocsRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref RootHostedZone
+      Name: !Ref DocsDomainName
+      Type: CNAME
+      TTL: "60"
+      ResourceRecords:
+        - !GetAtt DocsCloudFrontDistribution.DomainName
 
   # Cloud Front
   DocsCloudFrontDistributionIdentity:

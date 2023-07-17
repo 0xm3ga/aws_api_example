@@ -5,5 +5,5 @@ resolve_s3 = true
 s3_prefix = "aws-api-example"
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
-parameter_overrides = "ApiDomainName=\"api.bluecollarverse.com\" DocsDomainName=\"docs.bluecollarverse.com\" DocsBucketName=\"bluecollarverse-docs\""
+parameter_overrides = "ApiDomainName=\"api.bluecollarverse.com\" DocsDomainName=\"docs.bluecollarverse.com\" DocsBucketName=\"bluecollarverse-docs\" RootHostedZone=\"Z03043642OPWWK7FLQJE6\""
 image_repositories = []

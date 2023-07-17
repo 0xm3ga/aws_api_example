@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Description: Bucket name to be used for hosting API docs.
     Default: <my_project_name>-docs
+  RootHostedZone:
+    Type: String
+    Description: Root Hosted Zone
+    Default: <hosted zone id>
 
 Resources:
   # API stacks
@@ -25,6 +29,7 @@ Resources:
       Parameters:
         ApiDomainName: !Ref ApiDomainName
         DocsDomainName: !Ref DocsDomainName
+        RootHostedZone: !Ref RootHostedZone
 
   # Docs stacks
   DocsStack:
@@ -34,11 +39,9 @@ Resources:
       Parameters:
         DocsBucketName: !Ref DocsBucketName
         DocsDomainName: !Ref DocsDomainName
+        RootHostedZone: !Ref RootHostedZone
 
 Outputs:
-  DocsCloudFrontDistributionOutput:
-    Description: CloudFront endpoint to add in DNS CNAME record (CNAME  docs  <cloud_front_id>  default)
-    Value: !GetAtt DocsStack.Outputs.DocsCloudFrontDistributionOutput
   DocsCloudFrontDistributionIdOutput:
     Description: Docs CloudFront Distribution ID
     Value: !GetAtt DocsStack.Outputs.DocsCloudFrontDistributionIdOutput
