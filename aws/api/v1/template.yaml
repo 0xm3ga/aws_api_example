@@ -47,25 +47,17 @@ Resources:
           Parameters:
             Location: ./api-spec/bundled.yaml
 
-  MainApiDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-      - HelloLambda
-      - GoodbyeLambda
-    Properties:
-      RestApiId: !Ref MainApi
-      Description: Deployment for Main API
-
   # API mappings
   MainApiBasePathMapping:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn:
-      - MainApiDeployment
+      - MainApi
+      - ApiDomain
     Properties:
       BasePath: v1
       DomainName: !Ref ApiDomain
       RestApiId: !Ref MainApi
-      Stage: Prod
+      Stage: !Ref MainApi.Stage
 
   MainApiRecordSet:
     Type: AWS::Route53::RecordSet
