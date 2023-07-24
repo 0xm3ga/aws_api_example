@@ -118,7 +118,11 @@ Resources:
             Method: get
             RestApiId:
               Ref: MainApi
-# Outputs:
-#   MainApiOutput:
-#     Description: "API Gateway endpoint URL for Prod environment"
-#     Value: !Sub "https://${MainApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
+Outputs:
+  MainApiIdOutput:
+    Description: Media API Id output
+    Value: !Ref MainApi
+  MainApiStageOutput:
+    Description: Main API Stage output
+    Value: !Ref MainApi.Stage
