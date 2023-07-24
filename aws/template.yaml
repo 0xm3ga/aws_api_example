@@ -31,6 +31,16 @@ Resources:
         DocsDomainName: !Ref DocsDomainName
         RootHostedZone: !Ref RootHostedZone
 
+  # Default API base path mapping
+  DefaultApiBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn:
+      - ApiV1Stack
+    Properties:
+      DomainName: !Ref ApiDomainName
+      RestApiId: !GetAtt ApiV1Stack.Outputs.MainApiIdOutput
+      Stage: !GetAtt ApiV1Stack.Outputs.MainApiStageOutput
+
   # Docs stacks
   DocsStack:
     Type: AWS::Serverless::Application
